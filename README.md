@@ -27,9 +27,8 @@ Setting Up TensorFlow Serving:
        models/sickle-cell
 
        Run TensorFlow Serving Docker:
-       docker run -p 8501:8501 --name tf_serving_sicklecell \
-  -v "C:/Users/Student/Desktop/ml/SickleCellClassification/models/sickle-cell:/models/sickle-cell" \
-  -e MODEL_NAME=sickle-cell -t tensorflow/serving
+       docker run -p 8501:8501 --name tf_serving_sicklecell \ -v "C:/Users/Student/Desktop/ml/SickleCellClassification/models/sickle-cell:/models/sickle-cell" \   -e MODEL_NAME=sickle-cell -t tensorflow/serving
+  
 
    REST API endpoint:
    http://localhost:8501/v1/models/sickle-cell:predict
