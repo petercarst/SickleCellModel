@@ -3,11 +3,11 @@ from fastapi import FastAPI, File, UploadFile
 import uvicorn
 import numpy as np
 from PIL import Image
-import requests
+import httpx
 
 app = FastAPI()
 
-# Loading model
+# TensorFlow Serving endpoint
 endpoint = "http://localhost:8501/v1/models/sickle-cell:predict"
 
 CLASS_NAMES = ["Sickle Cell", "Normal"]
@@ -23,21 +23,40 @@ def read_file_as_image(data):
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    image = read_file_as_image(await file.read())
-    img_batch = np.expand_dims(image, 0)
+    try:
+        # Read and preprocess image
+        image = read_file_as_image(await file.read())
+        img_batch = np.expand_dims(image, 0)
 
-    json_data = {"instances": img_batch.tolist()}
-    response = requests.post(endpoint, json=json_data)
-    response.raise_for_status()
+        # Prepare request for TF Serving
+        json_data = {"instances": img_batch.tolist()}
 
-    # Get single sigmoid output
-    prediction = float(response.json()["predictions"][0][0])  # single probability
-    predicted_class = "Sickle" if prediction >= 0.5 else "Normal"
+        # Async request to TF Serving
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(endpoint, json=json_data)
+            response.raise_for_status()
 
-    return {
-        "class": predicted_class,
-        "confidence": prediction if prediction >= 0.5 else 1 - prediction
-    }
+        # Get prediction (sigmoid output)
+        prediction = float(response.json()["predictions"][0][0])
+
+        # Convert to class
+        predicted_class = "Sickle Cell" if prediction >= 0.5 else "Normal"
+        confidence = prediction if prediction >= 0.5 else 1 - prediction
+
+        return {
+            "class": predicted_class,
+            "confidence": confidence
+        }
+       
+       # Error handling
+    except httpx.RequestError as e:
+        return {"error": f"Connection error: {str(e)}"}
+
+    except httpx.HTTPStatusError as e:
+        return {"error": f"TF Serving error: {e.response.text}"}
+
+    except Exception as e:
+        return {"error": f"Unexpected error: {str(e)}"}
 
 
 if __name__ == "__main__":
