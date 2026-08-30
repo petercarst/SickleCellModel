@@ -17,19 +17,19 @@
   <div class="stats-strip">
     <div class="stat-box">
       <div class="stat-label">Total Scans</div>
-      <div class="stat-value">{{ number_format($stats['total']) }}</div>
+      <div class="stat-value" id="statTotalScans">{{ number_format($stats['total']) }}</div>
     </div>
     <div class="stat-box">
       <div class="stat-label">Sickle-Positive</div>
-      <div class="stat-value">{{ number_format($stats['sickle']) }}</div>
+      <div class="stat-value" id="statSicklePositive">{{ number_format($stats['sickle']) }}</div>
     </div>
     <div class="stat-box">
       <div class="stat-label">Positive Rate</div>
-      <div class="stat-value">{{ $stats['sickle_pct'] }}%</div>
+      <div class="stat-value" id="statPositiveRate">{{ $stats['sickle_pct'] }}%</div>
     </div>
     <div class="stat-box">
       <div class="stat-label">Avg. Confidence</div>
-      <div class="stat-value">{{ $stats['avg_confidence'] }}%</div>
+      <div class="stat-value" id="statAvgConfidence">{{ $stats['avg_confidence'] }}%</div>
     </div>
   </div>
 
@@ -140,7 +140,6 @@
 
   </div>
 
-  @if ($recent->isNotEmpty())
   <div class="row mt-4">
     <div class="col-12">
       <div class="app-card p-3 p-md-4">
@@ -148,12 +147,15 @@
           <span>03 — Recent Scans</span>
           <a href="{{ route('predictions.history') }}" style="font-family:var(--mono);font-size:.65rem;color:var(--accent2);text-decoration:none;">View all &rarr;</a>
         </div>
-        <div style="overflow-x:auto;">
+        <div id="recentScansEmpty" style="padding:1rem 0;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.75rem;{{ $recent->isNotEmpty() ? 'display:none;' : '' }}">
+          No scans yet — run one above.
+        </div>
+        <div id="recentScansWrap" style="overflow-x:auto;{{ $recent->isEmpty() ? 'display:none;' : '' }}">
           <table class="history-table">
             <thead>
               <tr><th>File</th><th>Result</th><th>Confidence</th><th>When</th></tr>
             </thead>
-            <tbody>
+            <tbody id="recentScansBody">
               @foreach ($recent as $p)
               <tr>
                 <td>{{ \Illuminate\Support\Str::limit($p->original_filename, 28) }}</td>
@@ -168,7 +170,6 @@
       </div>
     </div>
   </div>
-  @endif
 
   <div class="row g-3 mt-2">
     <div class="col-12 col-sm-6 col-md-4">
@@ -309,7 +310,51 @@
     document.getElementById('statScore').textContent = `${pct}%`;
     document.getElementById('statRaw').textContent   = Number(data.raw_score ?? conf).toFixed(6);
 
+    if (data.stats) updateStats(data.stats);
+    if (selectedFile) prependRecentScan(selectedFile.name, cls, conf);
+
     setPanel('result');
+  }
+
+  function updateStats(stats) {
+    document.getElementById('statTotalScans').textContent    = stats.total.toLocaleString();
+    document.getElementById('statSicklePositive').textContent = stats.sickle.toLocaleString();
+    document.getElementById('statPositiveRate').textContent   = `${stats.sickle_pct}%`;
+    document.getElementById('statAvgConfidence').textContent  = `${stats.avg_confidence}%`;
+  }
+
+  function truncateName(name, len = 28) {
+    return name.length > len ? name.slice(0, len) + '...' : name;
+  }
+
+  function prependRecentScan(filename, cls, confidence) {
+    const tbody = document.getElementById('recentScansBody');
+    if (!tbody) return;
+
+    const tr = document.createElement('tr');
+
+    const fileTd = document.createElement('td');
+    fileTd.textContent = truncateName(filename);
+
+    const resultTd = document.createElement('td');
+    const span = document.createElement('span');
+    span.style.color = cls === 'Sickle Cell' ? 'var(--sickle)' : 'var(--normal)';
+    span.textContent = cls;
+    resultTd.appendChild(span);
+
+    const confTd = document.createElement('td');
+    confTd.textContent = `${(confidence * 100).toFixed(1)}%`;
+
+    const whenTd = document.createElement('td');
+    whenTd.style.color = 'var(--muted)';
+    whenTd.textContent = 'just now';
+
+    tr.append(fileTd, resultTd, confTd, whenTd);
+    tbody.prepend(tr);
+    while (tbody.children.length > 5) tbody.removeChild(tbody.lastElementChild);
+
+    document.getElementById('recentScansEmpty').style.display = 'none';
+    document.getElementById('recentScansWrap').style.display = '';
   }
 
   function showError(msg) {

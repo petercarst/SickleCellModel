@@ -65,6 +65,7 @@ class PredictionController extends Controller
             'class' => $prediction->predicted_class,
             'confidence' => $prediction->confidence,
             'raw_score' => $prediction->raw_score,
+            'stats' => $this->stats(),
         ]);
     }
 
