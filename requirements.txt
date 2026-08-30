@@ -1,6 +1,8 @@
-fastapi==0.111.1
-uvicorn==0.26.1
-numpy==1.25.2
-Pillow==10.0.0
-requests==2.31.0
-tensorflow==2.14.0
+fastapi==0.136.1
+uvicorn==0.46.0
+numpy==2.2.6
+Pillow==12.2.0
+httpx==0.28.1
+python-multipart==0.0.27
+tensorflow==2.21.0
+scikit-learn==1.7.2

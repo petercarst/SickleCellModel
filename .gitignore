@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+checkpoints/
+
+# Node (legacy, kept in case anything reappears)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
