@@ -69,7 +69,9 @@ php artisan migrate
 
 ## 5. Running the Application
 
-Start each service in its own terminal:
+**Quick start (Windows):** double-click `start-sicklevision.bat` — it brings up MySQL, Docker/TF Serving, the FastAPI bridge, and the Laravel dev server together (safe to re-run; only starts what isn't already running). `stop-sicklevision.bat` shuts down FastAPI, Laravel, and the TF Serving container (leaves MySQL and Docker Desktop running for other local projects). Logs land in `logs/`.
+
+Or start each service manually, in its own terminal:
 
 ```bash
 # Terminal 1 — TensorFlow Serving (serves the highest-numbered model version automatically)
